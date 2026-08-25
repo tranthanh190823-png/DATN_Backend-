@@ -25,7 +25,7 @@ const formatPaymentMethod = (method) => {
 };
 
 const getFrontendOrderUrl = (orderId) => {
-  const base = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
+  const base = (process.env.FRONTEND_URL || 'https://aventis.io.vn').replace(/\/$/, '');
   return `${base}/order/${orderId}`;
 };
 
@@ -34,8 +34,7 @@ const buildOrderItemsHtml = (orderItems = []) =>
     .map(
       (item) => `
       <tr>
-        <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}${
-          item.volume ? ` (${item.volume}ml)` : ''
+        <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}${item.volume ? ` (${item.volume}ml)` : ''
         }</td>
         <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.qty}</td>
         <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(
@@ -48,15 +47,15 @@ const buildOrderItemsHtml = (orderItems = []) =>
 const buildOrderSummaryBlock = (order) => `
         <div style="background: #faf8f4; border: 1px solid #e8e0d4; border-radius: 8px; padding: 16px; margin: 20px 0;">
           <p style="margin: 0 0 8px;"><strong>Mã đơn hàng:</strong> #${order._id
-            .toString()
-            .slice(-8)
-            .toUpperCase()}</p>
+    .toString()
+    .slice(-8)
+    .toUpperCase()}</p>
           <p style="margin: 0 0 8px;"><strong>Phương thức:</strong> ${formatPaymentMethod(
-            order.paymentMethod
-          )}</p>
+      order.paymentMethod
+    )}</p>
           <p style="margin: 0;"><strong>Tổng tiền:</strong> <span style="color: #8b5a2b; font-size: 18px;">${formatCurrency(
-            order.totalPrice
-          )}</span></p>
+      order.totalPrice
+    )}</span></p>
         </div>
 
         <h3 style="font-size: 16px; margin-bottom: 12px;">Chi tiết sản phẩm</h3>
@@ -76,16 +75,14 @@ const buildOrderSummaryBlock = (order) => `
         <div style="margin-top: 16px; font-size: 14px; text-align: right;">
           <p style="margin: 4px 0;">Tạm tính: ${formatCurrency(order.itemsPrice)}</p>
           <p style="margin: 4px 0;">Phí vận chuyển: ${formatCurrency(order.shippingPrice)}</p>
-          ${
-            order.discountPrice > 0
-              ? `<p style="margin: 4px 0; color: #16a34a;">Giảm giá${
-                  order.voucherCode ? ` (${order.voucherCode})` : ''
-                }: -${formatCurrency(order.discountPrice)}</p>`
-              : ''
-          }
+          ${order.discountPrice > 0
+    ? `<p style="margin: 4px 0; color: #16a34a;">Giảm giá${order.voucherCode ? ` (${order.voucherCode})` : ''
+    }: -${formatCurrency(order.discountPrice)}</p>`
+    : ''
+  }
           <p style="margin: 8px 0 0; font-weight: bold; font-size: 16px;">Tổng cộng: ${formatCurrency(
-            order.totalPrice
-          )}</p>
+    order.totalPrice
+  )}</p>
         </div>
 
         <h3 style="font-size: 16px; margin: 24px 0 8px;">Địa chỉ giao hàng</h3>
@@ -127,9 +124,8 @@ const buildOrderPlacedHtml = (order, user) => {
     `
         <p>Xin chào <strong>${user.name}</strong>,</p>
         <p>Cảm ơn anh/chị đã đặt hàng tại <strong>Aventis</strong>. Chúng tôi đã <strong>nhận đơn hàng</strong> và đang xử lý.</p>
-        <p style="color: #666; font-size: 14px;">Trạng thái: <strong>${
-          order.status || 'Chờ xử lý'
-        }</strong>. ${paymentHint}</p>
+        <p style="color: #666; font-size: 14px;">Trạng thái: <strong>${order.status || 'Chờ xử lý'
+    }</strong>. ${paymentHint}</p>
         ${buildOrderSummaryBlock(order)}
         <p style="margin: 24px 0;">
           <a href="${orderUrl}" style="background-color: #8b5a2b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">

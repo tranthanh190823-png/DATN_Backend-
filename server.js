@@ -16,6 +16,7 @@ import newsRoutes from './routes/newsRoutes.js';
 import flashSaleRoutes from './routes/flashSaleRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import addressRoutes from './routes/addressRoutes.js';
+import bannerRoutes from './routes/bannerRoutes.js';
 import chatLiveRoutes from './routes/chatLiveRoutes.js';
 import { notFound, errorHandler } from './middlewares/errorMiddleware.js';
 import http from 'http';
@@ -49,6 +50,7 @@ app.use('/api/flash-sales', flashSaleRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/chat-live', chatLiveRoutes);
 app.use('/api/addresses', addressRoutes);
+app.use('/api/banners', bannerRoutes);
 
 app.get('/api/config/paypal', (req, res) => {
   res.send(process.env.PAYPAL_CLIENT_ID || 'sb');

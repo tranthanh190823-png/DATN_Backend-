@@ -1,6 +1,7 @@
 import User from '../models/User.js';
 import generateToken from '../utils/generateToken.js';
 import sendEmail from '../utils/sendEmail.js';
+import { getResetPasswordEmailHtml } from '../utils/emailTemplates.js';
 import crypto from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
 
@@ -85,12 +86,7 @@ const registerUser = async (req, res, next) => {
             password
         });
 
-        if (user) {
-            res.status(201).json(buildAuthResponse(user, res));
-        } else {
-            res.status(400);
-            throw new Error('Dữ liệu không hợp lệ');
-        }
+        res.status(201).json(buildAuthResponse(user, res));
     } catch (error) {
         next(error);
     }
@@ -421,40 +417,25 @@ const forgotPassword = async (req, res, next) => {
         await user.save({ validateBeforeSave: false });
 
         // Ưu tiên domain từ ENV (ví dụ: https://aventis.io.vn) trước khi fallback sang Request Header hoặc domain mặc định
-        const envFrontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0].trim() : null;
         const requestOrigin = req.headers.origin || (req.headers.referer ? new URL(req.headers.referer).origin : null);
+        const envFrontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',')[0].trim() : null;
         const frontendUrl = (envFrontendUrl || requestOrigin || 'https://aventis.io.vn').replace(/\/$/, '');
         const resetUrl = `${frontendUrl}/resetpassword/${resetToken}`;
+        const localResetUrl = `http://localhost:5173/resetpassword/${resetToken}`;
 
-        // In link khôi phục trực tiếp ra Terminal Backend (Cực kỳ hữu ích khi báo cáo/demo nếu mạng chặn mail)
         console.log('\n=====================================================');
         console.log('🔑 [RESET PASSWORD LINK]');
-        console.log(resetUrl);
+        console.log('🌐 Main URL:  ', resetUrl);
+        console.log('💻 Local URL: ', localResetUrl);
         console.log('=====================================================\n');
 
         const message = `Bạn nhận được email này vì bạn (hoặc ai đó) đã yêu cầu đặt lại mật khẩu.\n\nHãy truy cập vào đường dẫn sau để đặt lại mật khẩu của bạn:\n\n${resetUrl}`;
 
         const emailOptions = {
             email: user.email,
-            subject: 'Yêu cầu đặt lại mật khẩu - DATN Nước Hoa',
+            subject: 'Yêu cầu đặt lại mật khẩu - Aventis Perfume',
             message,
-            html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #333;">Yêu cầu Đặt Lại Mật Khẩu</h2>
-                    <p>Xin chào ${user.name},</p>
-                    <p>Bạn nhận được email này vì bạn (hoặc ai đó) đã yêu cầu đặt lại mật khẩu cho tài khoản của mình.</p>
-                    <p style="margin: 20px 0;">
-                        <a href="${resetUrl}" style="background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
-                            Đặt Lại Mật Khẩu
-                        </a>
-                    </p>
-                    <p style="color: #666; font-size: 14px;">Hoặc copy link này vào trình duyệt:</p>
-                    <p style="color: #666; font-size: 12px; word-break: break-all;">${resetUrl}</p>
-                    <p style="color: #666; font-size: 12px; margin-top: 20px;">Link này có hiệu lực trong 15 phút.</p>
-                    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-                    <p style="color: #999; font-size: 12px;">Đây là email tự động từ DATN Nước Hoa. Vui lòng không trả lời email này.</p>
-                </div>
-            `
+            html: getResetPasswordEmailHtml(resetUrl, user.name)
         };
 
         // Gửi email bất đồng bộ ở background để giao diện phản hồi TỨC THÌ cho người dùng (< 50ms)

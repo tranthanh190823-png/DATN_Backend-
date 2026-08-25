@@ -10,31 +10,93 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
+// ========== KEYWORD DETECTION ==========
+
 const PRODUCT_INTENT_KEYWORDS = [
+  // Có dấu
   'sản phẩm', 'nước hoa', 'mùi hương', 'hương thơm', 'chai', 'lọ',
   'gợi ý', 'tư vấn', 'recommend', 'đề xuất', 'phù hợp',
   'mua', 'chọn', 'tìm', 'cần', 'muốn', 'thích',
   'gỗ', 'hoa', 'cam chanh', 'tươi', 'ngọt', 'phương đông', 'oriental',
   'floral', 'woody', 'citrus', 'fresh', 'gourmand',
-  'edp', 'edt', 'parfum', 'cologne', 'extrait',
+  'edp', 'edt', 'parfum', 'cologne', 'extrait', 'eau de parfum', 'eau de toilette',
   'đi làm', 'hẹn hò', 'tiệc', 'hằng ngày', 'daily', 'office', 'date',
   'nam', 'nữ', 'men', 'women', 'unisex', 'luxury', 'sang', 'cao cấp',
   'hot', 'bán chạy', 'best', 'mới', 'new', 'mới về', 'mới nhất',
   'giá', 'rẻ', 'đắt', 'khuyến mãi', 'sale', 'giảm giá', 'voucher',
   'dior', 'chanel', 'gucci', 'ysl', 'versace', 'armani', 'bvlgari',
   'tom ford', 'creed', 'jo malone', 'le labo', 'paco rabanne',
-  'davidoff', 'lancôme', 'giorgio',
+  'davidoff', 'lancôme', 'giorgio', 'afnan', 'hermes', 'hermès',
+  // Không dấu (khách gõ tắt)
+  'san pham', 'nuoc hoa', 'mui huong', 'huong thom',
+  'goi y', 'tu van', 'de xuat', 'phu hop',
+  'chon', 'tim', 'can', 'muon', 'thich',
+  'go', 'cam chanh', 'tuoi', 'ngot', 'phuong dong',
+  'di lam', 'hen ho', 'tiec', 'hang ngay',
+  'nu', 'cao cap',
+  'ban chay', 'moi ve', 'moi nhat',
+  'gia', 're', 'dat', 'khuyen mai', 'giam gia',
+  // Volume/Size keywords
+  '10ml', '20ml', '30ml', '50ml', '100ml',
+  // Scent notes
+  'vanilla', 'musk', 'amber', 'oud', 'trầm', 'tram',
+  'hoa hồng', 'hoa hong', 'lavender', 'bạc hà', 'bac ha',
 ];
 
 const ORDER_INTENT_KEYWORDS = [
   'đơn hàng', 'đơn của tôi', 'mã đơn', 'order', 'kiểm tra đơn',
   'giao hàng', 'ship', 'vận chuyển', 'theo dõi', 'tracking',
   'đã nhận', 'giao chưa', 'bao giờ nhận',
+  // Không dấu
+  'don hang', 'don cua toi', 'ma don', 'kiem tra don',
+  'giao hang', 'van chuyen', 'theo doi',
+  'da nhan', 'giao chua', 'bao gio nhan',
 ];
 
 const TYPE_KEYWORDS = {
   chiết: ['chiết', 'chiet', 'bỏ chai', 'bo chai', 'lọ nhỏ', 'ly nhỏ', 'mini'],
   full: ['full', 'full box', 'hộp đầy', 'đầy hộp', 'chính hãng', 'nguyên seal', 'mới 100%'],
+};
+
+// Map tên brand phổ biến → giá trị enum trong DB
+const BRAND_KEYWORDS = {
+  'chanel': 'CHANEL',
+  'dior': 'DIOR', 'christian dior': 'DIOR',
+  'gucci': 'GUCCI',
+  'hermes': 'HERMES', 'hermès': 'HERMES', 'hermes paris': 'HERMES',
+  'ysl': 'YSL', 'yves saint laurent': 'YSL', 'saint laurent': 'YSL',
+  'afnan': 'AFNAN',
+  'versace': 'VERSACE',
+  'armani': 'ARMANI', 'giorgio armani': 'ARMANI',
+  'tom ford': 'TOM FORD',
+  'bvlgari': 'BVLGARI', 'bulgari': 'BVLGARI',
+  'paco rabanne': 'PACO RABANNE',
+  'davidoff': 'DAVIDOFF',
+  'lancome': 'LANCOME', 'lancôme': 'LANCOME',
+};
+
+// ========== SYNONYM MAP (Bước 3 — chuẩn bị) ==========
+// Chuẩn hoá từ khoá tìm kiếm → giá trị DB
+const SYNONYM_MAP = {
+  // Scent Category
+  'woody': 'Go', 'gỗ': 'Go', 'go': 'Go', 'trầm': 'Go', 'tram': 'Go', 'ấm': 'Go',
+  'sweet': 'Ngot', 'ngọt': 'Ngot', 'ngot': 'Ngot', 'gourmand': 'Ngot', 'vanilla': 'Ngot',
+  'floral': 'Hoa', 'hoa': 'Hoa', 'hoa hồng': 'Hoa', 'hoa hong': 'Hoa', 'lavender': 'Hoa',
+  'citrus': 'Cam', 'cam chanh': 'Cam', 'fresh': 'Cam', 'tươi mát': 'Cam', 'tuoi mat': 'Cam', 'tươi': 'Cam',
+  // Gender
+  'male': 'Nam', 'nam': 'Nam', 'men': 'Nam', 'gentleman': 'Nam', 'đàn ông': 'Nam', 'dan ong': 'Nam',
+  'female': 'Nu', 'nữ': 'Nu', 'nu': 'Nu', 'women': 'Nu', 'lady': 'Nu', 'phụ nữ': 'Nu', 'phu nu': 'Nu',
+};
+
+// ========== DETECTION HELPERS ==========
+
+const detectBrand = (text) => {
+  const t = text.toLowerCase();
+  const sortedKeys = Object.keys(BRAND_KEYWORDS).sort((a, b) => b.length - a.length);
+  for (const keyword of sortedKeys) {
+    if (t.includes(keyword)) return BRAND_KEYWORDS[keyword];
+  }
+  return null;
 };
 
 const loadConfig = () => {
@@ -76,72 +138,158 @@ const detectIntent = (text) => {
   return 'general';
 };
 
+// ========== DETECTION HELPERS (Bước 2) ==========
+
+// Detect volume/size từ tin nhắn
+const detectVolume = (text) => {
+  const match = text.match(/(\d+)\s*ml/i);
+  return match ? parseInt(match[1]) : null;
+};
+
+// Parse khoảng giá: "từ 500k đến 1 triệu", "dưới 2tr", "trên 1 triệu"
+const parsePrice = (text) => {
+  const t = text.toLowerCase();
+  let minPrice = null;
+  let maxPrice = null;
+
+  const parseUnit = (numStr, unitStr) => {
+    const num = parseInt(numStr);
+    const unit = (unitStr || '').toLowerCase();
+    if (unit.includes('tr') || unit.includes('triệu') || unit.includes('trieu')) return num * 1_000_000;
+    if (unit === 'k') return num * 1_000;
+    // Số lớn hơn 10000 → coi như VND thật
+    if (num > 10000) return num;
+    // Số nhỏ (ví dụ "1", "2") nếu có unit thì đã xử lý, không có thì bỏ qua
+    return null;
+  };
+
+  // Pattern: "từ X đến Y" / "X đến Y" / "X - Y"
+  const rangeMatch = t.match(/(?:từ\s+)?(\d+)\s*(k|tr|triệu|trieu)?\s*(?:đến|den|tới|toi|\-)\s*(\d+)\s*(k|tr|triệu|trieu)?/i);
+  if (rangeMatch) {
+    minPrice = parseUnit(rangeMatch[1], rangeMatch[2]);
+    maxPrice = parseUnit(rangeMatch[3], rangeMatch[4]);
+    return { minPrice, maxPrice };
+  }
+
+  // Pattern: "dưới X" / "under X" / "tầm X"
+  const underMatch = t.match(/(?:dưới|duoi|under|tầm|tam|khoảng|khoang)\s*(\d+)\s*(k|tr|triệu|trieu)?/i);
+  if (underMatch) {
+    maxPrice = parseUnit(underMatch[1], underMatch[2]);
+    return { minPrice: null, maxPrice };
+  }
+
+  // Pattern: "trên X" / "over X"
+  const overMatch = t.match(/(?:trên|tren|over|hơn|hon)\s*(\d+)\s*(k|tr|triệu|trieu)?/i);
+  if (overMatch) {
+    minPrice = parseUnit(overMatch[1], overMatch[2]);
+    return { minPrice, maxPrice: null };
+  }
+
+  // Simple pattern: số + đơn vị (coi như maxPrice)
+  const simpleMatch = t.match(/(\d+)\s*(k|tr|triệu|trieu)/i);
+  if (simpleMatch) {
+    maxPrice = parseUnit(simpleMatch[1], simpleMatch[2]);
+    return { minPrice: null, maxPrice };
+  }
+
+  return { minPrice: null, maxPrice: null };
+};
+
+// Detect scent category dùng SYNONYM_MAP
+const detectScentCategory = (text) => {
+  const t = text.toLowerCase();
+  // Ưu tiên match dài trước ("cam chanh" trước "cam")
+  const sortedKeys = Object.keys(SYNONYM_MAP).sort((a, b) => b.length - a.length);
+  for (const keyword of sortedKeys) {
+    if (t.includes(keyword)) {
+      const val = SYNONYM_MAP[keyword];
+      // Chỉ return nếu là scent category
+      if (['Go', 'Hoa', 'Cam', 'Ngot'].includes(val)) return val;
+    }
+  }
+  return null;
+};
+
+// ========== PRODUCT RETRIEVAL ==========
+
 const retrieveProducts = async (userText) => {
   try {
     const t = userText.toLowerCase();
-    const wantsMale = /\bnam\b|male|men/.test(t);
-    const wantsFemale = /\bnữ\b|\bnu\b|female|women/.test(t);
+    const wantsMale = /\bnam\b|\bmale\b|\bmen\b|đàn ông|dan ong|gentleman/.test(t);
+    const wantsFemale = /\bnữ\b|\bnu\b|\bfemale\b|\bwomen\b|\blady\b|phụ nữ|phu nu/.test(t);
 
-    const familyMap = [
-      { kw: 'gỗ', val: 'Go' },
-      { kw: 'hoa', val: 'Hoa' },
-      { kw: 'cam chanh', val: 'Cam' },
-      { kw: 'cam', val: 'Cam' },
-      { kw: 'ngọt', val: 'Ngot' },
-    ];
+    // Detect brand từ tin nhắn khách
+    const detectedBrand = detectBrand(t);
 
-    let matchedFamily = null;
-    for (const { kw, val } of familyMap) {
-      if (t.includes(kw)) {
-        matchedFamily = val;
-        break;
-      }
-    }
+    // Detect scent category (dùng SYNONYM_MAP thay vì familyMap cũ)
+    const matchedFamily = detectScentCategory(t);
 
-    const priceMatch = t.match(/(\d+)\s*(k|tr|triệu|000|000đ)?/);
-    let maxPrice = null;
-    if (priceMatch) {
-      const num = parseInt(priceMatch[1]);
-      const unit = priceMatch[2] || '';
-      if (unit.includes('tr') || unit.includes('triệu')) maxPrice = num * 1_000_000;
-      else if (unit === 'k') maxPrice = num * 1_000;
-      else if (num > 100) maxPrice = num;
-    }
+    // Parse khoảng giá nâng cao
+    const { minPrice, maxPrice } = parsePrice(t);
+
+    // Detect volume
+    const detectedVolume = detectVolume(t);
 
     const productType = detectProductType(t);
     const query = { isActive: true };
 
-    const wantHot = /\bhot\b|bán chạy|\bbest\b|phổ biến|được yêu thích|nổi bật/.test(t);
-    const wantNew = /mới về|mới nhất/.test(t);
-    const wantSale = /sale|giảm giá|khuyến mãi|voucher/.test(t);
+    const wantHot = /\bhot\b|bán chạy|ban chay|\bbest\b|phổ biến|pho bien|được yêu thích|nổi bật/.test(t);
+    const wantNew = /mới về|moi ve|mới nhất|moi nhat/.test(t);
+    const wantSale = /sale|giảm giá|giam gia|khuyến mãi|khuyen mai|voucher/.test(t);
 
-    if (wantHot) query.isBestSeller = true;
-    if (wantNew) query.isNewArrival = true;
-    if (wantSale) query.isSale = true;
-    if (maxPrice) query.price = { $lte: maxPrice };
-    if (wantsMale && !wantsFemale) query.gender = { $in: ['Nam', 'Unisex'] };
-    if (wantsFemale && !wantsMale) query.gender = { $in: ['Nu', 'Unisex'] };
-    if (matchedFamily) query.scentCategory = matchedFamily;
-    if (productType) query.type = productType;
+    // Đếm số filter để quyết định limit
+    let filterCount = 0;
+
+    // ⚡ Thêm filter brand nếu khách hỏi cụ thể 1 thương hiệu
+    if (detectedBrand) { query.brand = detectedBrand; filterCount++; }
+    if (wantHot) { query.isBestSeller = true; filterCount++; }
+    if (wantNew) { query.isNewArrival = true; filterCount++; }
+    if (wantSale) { query.isSale = true; filterCount++; }
+
+    // Price range filter
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = minPrice;
+      if (maxPrice) query.price.$lte = maxPrice;
+      filterCount++;
+    }
+
+    if (wantsMale && !wantsFemale) { query.gender = { $in: ['Nam', 'Unisex'] }; filterCount++; }
+    if (wantsFemale && !wantsMale) { query.gender = { $in: ['Nu', 'Unisex'] }; filterCount++; }
+    if (matchedFamily) { query.scentCategory = matchedFamily; filterCount++; }
+    if (productType) { query.type = productType; filterCount++; }
+
+    // Volume filter: tìm sản phẩm có volume.ml matching
+    if (detectedVolume) {
+      query['volumes.ml'] = detectedVolume;
+      filterCount++;
+    }
+
+    // Tăng limit khi có nhiều filter cụ thể (Bước 2)
+    const limit = filterCount >= 2 ? 8 : 5;
 
     let products = await Product.find(query)
       .sort({ isHot: -1, isBestSeller: -1, isNewArrival: -1, rating: -1 })
-      .limit(4)
+      .limit(limit)
       .lean();
 
-    if (products.length === 0) {
-      products = await Product.find({ isActive: true })
+    // Fallback: nếu không tìm thấy, nới lỏng filter nhưng GIỮ NGUYÊN brand
+    if (products.length === 0 && detectedBrand) {
+      products = await Product.find({ isActive: true, brand: detectedBrand })
         .sort({ rating: -1 })
-        .limit(4)
+        .limit(limit)
         .lean();
     }
 
+    // ❌ BỎ fallback cuối — nếu không match thì trả [] để AI nói "không tìm thấy"
     return products;
   } catch (error) {
     console.error('Error retrieving products:', error);
     return [];
   }
 };
+
+// ========== PRODUCT FORMATTING ==========
 
 const buildProductContext = (products) => {
   if (!products || products.length === 0) return '';
@@ -168,11 +316,10 @@ const buildProductContext = (products) => {
       const stockInfo =
         typeof p.stock === 'number' ? (p.stock > 0 ? 'còn hàng' : 'hết hàng') : '';
 
-      return `${i + 1}. **${p.name}** — ${p.brand}${volume ? `, ${volume}` : ''} — ${price.toLocaleString('vi-VN')}₫${originalPrice}${stockInfo ? ` — ${stockInfo}` : ''}${
-        p.scentNotes && p.scentNotes.length > 0
+      return `${i + 1}. **${p.name}** — ${p.brand}${volume ? `, ${volume}` : ''} — ${price.toLocaleString('vi-VN')}₫${originalPrice}${stockInfo ? ` — ${stockInfo}` : ''}${p.scentNotes && p.scentNotes.length > 0
           ? ` — Notes: ${p.scentNotes.slice(0, 4).join(', ')}`
           : ''
-      }`;
+        }`;
     })
     .join('\n');
 
@@ -183,6 +330,8 @@ const trimHistory = (messages, maxTurns = 12) => {
   if (!Array.isArray(messages)) return [];
   return messages.slice(-maxTurns);
 };
+
+// ========== CIRCUIT BREAKER & RETRY ==========
 
 let cachedModel = null;
 let cachedModelAt = 0;
@@ -265,6 +414,8 @@ const callChatCompletionWithRetry = async (client, requestPayload, model, maxRet
   throw lastError || new Error('AI model is unavailable');
 };
 
+// ========== FALLBACK RESPONSES ==========
+
 const buildFallbackResult = (intent, products, lastUserMessage, startTime) => {
   const fallback = buildLocalFallbackResponse(intent, products, lastUserMessage);
   return {
@@ -307,6 +458,7 @@ const buildLocalFallbackResponse = (intent, products, lastUserMessage) => {
 
   if (intent === 'product' && formattedProducts.length > 0) {
     const list = formattedProducts
+      .slice(0, 3)
       .map((p, i) => {
         const priceText = `${p.price.toLocaleString('vi-VN')}₫`;
         const saleText =
@@ -319,37 +471,39 @@ const buildLocalFallbackResponse = (intent, products, lastUserMessage) => {
 
     return {
       text:
-        `Dạ em xin gợi ý một vài mùi hương phù hợp cho anh/chị ạ:\n\n${list}\n\n` +
-        'Anh/chị bấm vào sản phẩm bên dưới để xem chi tiết, hoặc nhắn thêm sở thích (nam/nữ, ngân sách, mùi hương) để em tư vấn kỹ hơn nhé!',
-      products: formattedProducts,
+        `Anh/chị tham khảo mấy mùi này nhé:\n\n${list}\n\n` +
+        'Bấm vào sản phẩm bên dưới để xem chi tiết, hoặc cho mình biết thêm sở thích để tư vấn kỹ hơn!',
+      products: formattedProducts.slice(0, 3),
+    };
+  }
+
+  if (intent === 'product' && formattedProducts.length === 0) {
+    return {
+      text:
+        'Hiện mình chưa tìm thấy sản phẩm phù hợp. Anh/chị cho mình biết thêm sở thích (nam/nữ, ngân sách, nhóm hương) để mình tìm lại nhé!',
+      products: [],
     };
   }
 
   if (intent === 'order') {
     return {
       text:
-        'Dạ để kiểm tra đơn hàng, anh/chị vui lòng đăng nhập tài khoản và vào mục **Đơn hàng của tôi** trên website. ' +
-        'Nếu cần hỗ trợ gấp, anh/chị liên hệ hotline hoặc fanpage Aventis để nhân viên hỗ trợ ngay ạ.',
+        'Để kiểm tra đơn hàng, anh/chị đăng nhập và vào mục **Đơn hàng của tôi** trên website nhé. ' +
+        'Cần hỗ trợ gấp thì liên hệ hotline hoặc fanpage Aventis ạ.',
       products: [],
     };
   }
 
-  if (lastUserMessage) {
-    return {
-      text:
-        `Dạ em đã nhận được tin nhắn của anh/chị: "${lastUserMessage}". ` +
-        'Hiện hệ thống AI đang quá tải, em tạm chưa phản hồi chi tiết được. ' +
-        'Anh/chị có thể hỏi về **nước hoa**, **gợi ý mùi hương**, hoặc liên hệ hotline/fanpage để được hỗ trợ ngay ạ.',
-      products: [],
-    };
-  }
-
+  // General greeting / catch-all
   return {
     text:
-      'Dạ chào anh/chị! Em là trợ lý Aventis. Anh/chị cần tư vấn nước hoa, gợi ý mùi hương hay hỗ trợ đơn hàng ạ?',
+      'Chào anh/chị! Mình là Aven — chuyên viên tư vấn nước hoa của Aventis. ' +
+      'Anh/chị đang tìm mùi hương cho dịp nào — đi làm, hẹn hò hay dùng hằng ngày?',
     products: [],
   };
 };
+
+// ========== MAIN EXPORT ==========
 
 export const generateAIResponse = async (messages) => {
   const startTime = Date.now();
@@ -376,10 +530,13 @@ export const generateAIResponse = async (messages) => {
   let products = [];
   let productContext = '';
 
+  // Bước 1: CHỈ lấy sản phẩm khi intent = 'product'
+  // general/order → products = [], AI chat tự nhiên không ép bán hàng
   if (intent === 'product') {
     products = await retrieveProducts(lastUserMessage);
-    productContext = buildProductContext(products);
   }
+  // intent === 'general' hoặc 'order' → products giữ nguyên []
+  productContext = buildProductContext(products);
 
   const finalSystemPrompt =
     systemPrompt +
@@ -396,11 +553,11 @@ export const generateAIResponse = async (messages) => {
 
   const requestPayload = {
     messages: [{ role: 'system', content: finalSystemPrompt }, ...trimmedMessages],
-    max_tokens: 800,
-    temperature: 0.8,
+    max_tokens: 600,
+    temperature: 0.5,
     top_p: 0.9,
-    presence_penalty: 0.3,
-    frequency_penalty: 0.2,
+    presence_penalty: 0.4,
+    frequency_penalty: 0.6,
   };
 
   try {
@@ -424,7 +581,12 @@ export const generateAIResponse = async (messages) => {
       source: 'ai',
     };
   } catch (error) {
-    console.error('AI API failed, using local fallback:', error.message);
+    console.error('AI API failed, using local fallback:', {
+      message: error.message,
+      status: error?.status,
+      code: error?.code,
+      type: error?.type,
+    });
     return buildFallbackResult(intent, products, lastUserMessage, startTime);
   }
 };

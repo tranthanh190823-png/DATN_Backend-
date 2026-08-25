@@ -16,6 +16,7 @@
   "license": "ISC",
   "dependencies": {
     "@ai-sdk/xai": "^3.0.96",
+    "@google/genai": "^2.18.0",
     "@simplewebauthn/server": "^13.3.2",
     "ai": "^6.0.207",
     "axios": "^1.19.0",

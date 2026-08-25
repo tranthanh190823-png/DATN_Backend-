@@ -35,7 +35,7 @@ const checkVoucher = async (req, res) => {
 
         // Tính toán số tiền được giảm
         let discountAmount = 0;
-        
+
         if (voucher.discountType === 'FREE_SHIP') {
             // Free ship mã sẽ được Frontend xử lý trừ vào tiền ship, ở đây trả về discountAmount = 0 nhưng có type
             discountAmount = 0;

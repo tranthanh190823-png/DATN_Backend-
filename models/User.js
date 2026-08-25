@@ -17,11 +17,11 @@ const addressSchema = new mongoose.Schema({
 });
 
 const cartItemSchema = new mongoose.Schema({
-    product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
-    name: { type: String, required: true },
-    image: { type: String, required: true },
-    price: { type: Number, required: true },
-    qty: { type: Number, required: true },
+    product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+    name: { type: String, default: '' },
+    image: { type: String, default: '' },
+    price: { type: Number, default: 0 },
+    qty: { type: Number, default: 1 },
     volume: { type: Number },
     countInStock: { type: Number }
 });

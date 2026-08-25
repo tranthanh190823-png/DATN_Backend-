@@ -5,7 +5,8 @@ import {
     getVouchers,
     getPublicVouchers,
     deleteVoucher,
-    updateVoucher
+    updateVoucher,
+    deleteAllVouchers
 } from '../controllers/voucherController.js';
 import { protect, admin } from '../middlewares/authMiddleware.js';
 
@@ -19,6 +20,7 @@ router.route('/')
     .post(protect, admin, createVoucher);
 
 router.post('/check', protect, checkVoucher);
+router.delete('/all', protect, admin, deleteAllVouchers);
 
 router.route('/:id')
     .put(protect, admin, updateVoucher)

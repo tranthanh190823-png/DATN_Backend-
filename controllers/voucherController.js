@@ -84,13 +84,25 @@ const createVoucher = async (req, res) => {
             return res.status(400).json({ message: 'Mã giảm giá này đã tồn tại' });
         }
 
+        // Set expiration date to end of day 23:59:59
+        let expDate = new Date(expirationDate);
+        if (!isNaN(expDate.getTime())) {
+            expDate.setHours(23, 59, 59, 999);
+        }
+
+        // Logic refinement
+        let finalDiscountPercentage = discountPercentage || 0;
+        if (discountType === 'FIXED' || discountType === 'FREE_SHIP') {
+            finalDiscountPercentage = 0;
+        }
+
         const voucher = new Voucher({
             code: code.toUpperCase(),
             discountType: discountType || 'PERCENTAGE',
-            discountPercentage: discountPercentage || 0,
+            discountPercentage: finalDiscountPercentage,
             maxDiscountAmount: maxDiscountAmount || 0,
             minOrderValue: minOrderValue || 0,
-            expirationDate,
+            expirationDate: expDate,
             usageLimit,
             isActive
         });
@@ -161,9 +173,20 @@ const updateVoucher = async (req, res) => {
             voucher.discountPercentage = req.body.discountPercentage ?? voucher.discountPercentage;
             voucher.maxDiscountAmount = req.body.maxDiscountAmount ?? voucher.maxDiscountAmount;
             voucher.minOrderValue = req.body.minOrderValue ?? voucher.minOrderValue;
-            voucher.expirationDate = req.body.expirationDate ?? voucher.expirationDate;
             voucher.usageLimit = req.body.usageLimit ?? voucher.usageLimit;
             voucher.isActive = req.body.isActive ?? voucher.isActive;
+
+            if (req.body.expirationDate) {
+                let expDate = new Date(req.body.expirationDate);
+                if (!isNaN(expDate.getTime())) {
+                    expDate.setHours(23, 59, 59, 999);
+                    voucher.expirationDate = expDate;
+                }
+            }
+
+            if (voucher.discountType === 'FIXED' || voucher.discountType === 'FREE_SHIP') {
+                voucher.discountPercentage = 0;
+            }
 
             const updatedVoucher = await voucher.save();
             res.json(updatedVoucher);
@@ -175,11 +198,24 @@ const updateVoucher = async (req, res) => {
     }
 };
 
+// @desc    Delete all vouchers
+// @route   DELETE /api/vouchers/all
+// @access  Private/Admin
+const deleteAllVouchers = async (req, res) => {
+    try {
+        const result = await Voucher.deleteMany({});
+        res.json({ message: `Đã xóa ${result.deletedCount} mã giảm giá`, deletedCount: result.deletedCount });
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi server khi xóa mã giảm giá' });
+    }
+};
+
 export {
     checkVoucher,
     createVoucher,
     getVouchers,
     getPublicVouchers,
     deleteVoucher,
-    updateVoucher
+    updateVoucher,
+    deleteAllVouchers
 };

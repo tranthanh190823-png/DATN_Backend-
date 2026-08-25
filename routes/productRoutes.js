@@ -9,13 +9,15 @@ import {
     getTopProducts,
     getAllReviews,
     updateReviewStatus,
-    clearAllProductReviews
+    clearAllProductReviews,
+    bulkIncreaseStock
 } from '../controllers/productController.js';
 import { protect, admin } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
 router.route('/').get(getProducts).post(protect, admin, createProduct);
+router.put('/bulk-stock', protect, admin, bulkIncreaseStock);
 router.get('/top', getTopProducts);
 router.get('/reviews/all', protect, admin, getAllReviews);
 router.put('/:productId/reviews/:reviewId/status', protect, admin, updateReviewStatus);

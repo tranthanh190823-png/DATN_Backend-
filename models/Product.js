@@ -60,6 +60,8 @@ const productSchema = new mongoose.Schema({
     price: { type: Number },
     salePrice: { type: Number },
     stock: { type: Number, default: 0 },
+    // Trọng lượng (gram) dùng để tính phí vận chuyển GHN
+    weight: { type: Number, default: 200 },
     // Đánh giá
     reviews: [reviewSchema],
     rating: { type: Number, default: 0 },

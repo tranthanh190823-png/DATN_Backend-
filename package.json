@@ -9,7 +9,8 @@
     "dev": "nodemon server.js",
     "seed": "node seeder.js",
     "seed:destroy": "node seeder.js -d",
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand --detectOpenHandles --forceExit"
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --runInBand --detectOpenHandles --forceExit",
+    "expose": "lt --port 5000"
   },
   "keywords": [],
   "author": "",
@@ -47,6 +48,7 @@
   "devDependencies": {
     "cross-env": "^10.1.0",
     "jest": "^30.4.2",
+    "localtunnel": "^1.8.3",
     "mongodb-memory-server": "^11.2.0",
     "nodemon": "^3.1.14",
     "supertest": "^7.2.2"

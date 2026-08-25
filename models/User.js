@@ -92,6 +92,25 @@ const userSchema = new mongoose.Schema({
     // Khôi phục mật khẩu
     resetPasswordToken: String,
     resetPasswordExpire: Date,
+    // Mini Game / Rewards
+    dailyGamePlays: {
+        type: Number,
+        default: 0
+    },
+    lastGamePlayedAt: {
+        type: Date
+    },
+    coins: {
+        type: Number,
+        default: 0
+    },
+    checkInStreak: {
+        type: Number,
+        default: 0
+    },
+    lastCheckInDate: {
+        type: Date
+    },
     // Danh sách địa chỉ
     addresses: [addressSchema],
     // Danh sách sản phẩm yêu thích

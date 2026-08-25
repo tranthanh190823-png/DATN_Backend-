@@ -18,6 +18,9 @@ import chatRoutes from './routes/chatRoutes.js';
 import addressRoutes from './routes/addressRoutes.js';
 import bannerRoutes from './routes/bannerRoutes.js';
 import chatLiveRoutes from './routes/chatLiveRoutes.js';
+import bannerRoutes from './routes/bannerRoutes.js';
+import shippingRoutes from './routes/shippingRoutes.js';
+import gameRoutes from './routes/gameRoutes.js';
 import { notFound, errorHandler } from './middlewares/errorMiddleware.js';
 import http from 'http';
 import { initSocket } from './utils/socket.js';
@@ -51,6 +54,11 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/chat-live', chatLiveRoutes);
 app.use('/api/addresses', addressRoutes);
 app.use('/api/banners', bannerRoutes);
+<<<<<<< HEAD
+=======
+app.use('/api/shipping', shippingRoutes);
+app.use('/api/games', gameRoutes);
+>>>>>>> 30d2760bd365b8f897f16b65f6e71130fb915ed8
 
 app.get('/api/config/paypal', (req, res) => {
   res.send(process.env.PAYPAL_CLIENT_ID || 'sb');

@@ -8,7 +8,8 @@ import {
     updateOrderToDelivered,
     getMyOrders,
     getOrders,
-    cancelOrder
+    cancelOrder,
+    deleteAllOrders
 } from '../controllers/orderController.js';
 import { sepayWebhook } from '../controllers/sepayController.js';
 import {
@@ -31,6 +32,7 @@ router.route('/')
     .get(protect, admin, getOrders);
 
 router.route('/mine').get(protect, getMyOrders);
+router.route('/all').delete(protect, admin, deleteAllOrders);
 
 // SePay Webhook (Public route)
 router.post('/sepay/webhook', sepayWebhook);

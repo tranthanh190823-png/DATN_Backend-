@@ -357,6 +357,39 @@ const clearAllProductReviews = async (req, res) => {
     }
 };
 
+// @desc    Bulk increase stock for all products (for testing/demo)
+// @route   PUT /api/products/bulk-stock
+// @access  Private/Admin
+const bulkIncreaseStock = async (req, res) => {
+    try {
+        const { amount } = req.body;
+        const increaseAmount = Number(amount) || 100;
+        
+        const products = await Product.find({});
+        
+        for (let product of products) {
+            // Increase general stock
+            if (product.stock !== undefined) {
+                product.stock += increaseAmount;
+            }
+            
+            // Increase variant stock
+            if (product.volumes && product.volumes.length > 0) {
+                product.volumes.forEach(vol => {
+                    vol.stock = (vol.stock || 0) + increaseAmount;
+                });
+            }
+            
+            await product.save();
+        }
+        
+        res.json({ message: `Đã tăng ${increaseAmount} số lượng tồn kho cho ${products.length} sản phẩm thành công!` });
+    } catch (error) {
+        console.error('Bulk increase stock error:', error);
+        res.status(500).json({ message: 'Lỗi server khi cập nhật hàng loạt tồn kho' });
+    }
+};
+
 export { 
     getProducts, 
     getProductById, 
@@ -367,5 +400,6 @@ export {
     getTopProducts,
     getAllReviews,
     updateReviewStatus,
-    clearAllProductReviews
+    clearAllProductReviews,
+    bulkIncreaseStock
 };

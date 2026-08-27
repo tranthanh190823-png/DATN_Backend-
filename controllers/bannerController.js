@@ -1,6 +1,5 @@
 import Banner from '../models/Banner.js';
 
-<<<<<<< HEAD
 // @desc    Get public active banners
 // @route   GET /api/banners/public
 // @access  Public
@@ -17,17 +16,10 @@ const getPublicBanners = async (req, res) => {
 // @route   GET /api/banners
 // @access  Private/Admin
 const getAllBanners = async (req, res) => {
-=======
-// @desc    Get all banners
-// @route   GET /api/banners
-// @access  Public
-export const getBanners = async (req, res) => {
->>>>>>> 30d2760bd365b8f897f16b65f6e71130fb915ed8
     try {
         const banners = await Banner.find({}).sort({ order: 1, createdAt: -1 });
         res.json(banners);
     } catch (error) {
-<<<<<<< HEAD
         res.status(500).json({ message: 'Lỗi server khi lấy danh sách banner' });
     }
 };
@@ -51,44 +43,12 @@ const createBanner = async (req, res) => {
             buttonText: buttonText || 'Khám phá ngay',
             position: position || 'HERO_SLIDE',
             order: order !== undefined ? Number(order) : 0,
-            isActive: isActive !== undefined ? isActive : true
-=======
-        res.status(500).json({ message: error.message });
-    }
-};
-
-// @desc    Get active banners
-// @route   GET /api/banners/active
-// @access  Public
-export const getActiveBanners = async (req, res) => {
-    try {
-        const banners = await Banner.find({ isActive: true }).sort({ order: 1, createdAt: -1 });
-        res.json(banners);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
-// @desc    Create a banner
-// @route   POST /api/banners
-// @access  Private/Admin
-export const createBanner = async (req, res) => {
-    try {
-        const { title, imageUrl, link, isActive, order } = req.body;
-
-        const banner = new Banner({
-            title,
-            imageUrl,
-            link,
             isActive: isActive !== undefined ? isActive : true,
-            order: order || 0,
->>>>>>> 30d2760bd365b8f897f16b65f6e71130fb915ed8
         });
 
         const createdBanner = await banner.save();
         res.status(201).json(createdBanner);
     } catch (error) {
-<<<<<<< HEAD
         res.status(500).json({ message: 'Lỗi server khi tạo banner mới' });
     }
 };
@@ -143,54 +103,5 @@ export {
     getAllBanners,
     createBanner,
     updateBanner,
-    deleteBanner
+    deleteBanner,
 };
-=======
-        res.status(500).json({ message: error.message });
-    }
-};
-
-// @desc    Update a banner
-// @route   PUT /api/banners/:id
-// @access  Private/Admin
-export const updateBanner = async (req, res) => {
-    try {
-        const { title, imageUrl, link, isActive, order } = req.body;
-
-        const banner = await Banner.findById(req.params.id);
-
-        if (banner) {
-            banner.title = title || banner.title;
-            banner.imageUrl = imageUrl || banner.imageUrl;
-            banner.link = link !== undefined ? link : banner.link;
-            banner.isActive = isActive !== undefined ? isActive : banner.isActive;
-            banner.order = order !== undefined ? order : banner.order;
-
-            const updatedBanner = await banner.save();
-            res.json(updatedBanner);
-        } else {
-            res.status(404).json({ message: 'Banner không tồn tại' });
-        }
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
-// @desc    Delete a banner
-// @route   DELETE /api/banners/:id
-// @access  Private/Admin
-export const deleteBanner = async (req, res) => {
-    try {
-        const banner = await Banner.findById(req.params.id);
-
-        if (banner) {
-            await banner.deleteOne();
-            res.json({ message: 'Banner đã được xóa' });
-        } else {
-            res.status(404).json({ message: 'Banner không tồn tại' });
-        }
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
->>>>>>> 30d2760bd365b8f897f16b65f6e71130fb915ed8

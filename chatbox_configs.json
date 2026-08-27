@@ -1,13 +1,7 @@
 {
-<<<<<<< HEAD
-    "api_key": "",
+    "api_key": "sk-NuUh7amC3xSPlTraKv3skXauaCGEqZ0nN0PrYKCukU7o41c6",
     "base_url": "https://api.yescale.io/v1",
     "model": "deepseek-v3",
-=======
-    "api_key": "sk-8mMNtq2P9nga0DjeAjaWhezCMuLlzLaf0x0zBJ2zgoUV6g5e",
-    "base_url": "https://api.tokenrouter.com/v1",
-    "model": "deepseek/deepseek-v4-pro-0813-free",
->>>>>>> 30d2760bd365b8f897f16b65f6e71130fb915ed8
     "language": "vi-VN",
     "ai_timeout_ms": 60000
 }

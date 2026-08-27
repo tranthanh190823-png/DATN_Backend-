@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 
-<<<<<<< HEAD
 const bannerSchema = new mongoose.Schema({
     title: { type: String, required: true },
     subtitle: { type: String, default: '' },
@@ -19,38 +18,5 @@ const bannerSchema = new mongoose.Schema({
 });
 
 const Banner = mongoose.model('Banner', bannerSchema);
-=======
-const bannerSchema = new mongoose.Schema(
-    {
-        title: {
-            type: String,
-            required: true,
-        },
-        imageUrl: {
-            type: String,
-            required: true,
-        },
-        link: {
-            type: String,
-            required: false,
-        },
-        isActive: {
-            type: Boolean,
-            required: true,
-            default: true,
-        },
-        order: {
-            type: Number,
-            required: true,
-            default: 0,
-        },
-    },
-    {
-        timestamps: true,
-    }
-);
 
-const Banner = mongoose.model('Banner', bannerSchema);
-
->>>>>>> 30d2760bd365b8f897f16b65f6e71130fb915ed8
 export default Banner;

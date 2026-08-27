@@ -81,7 +81,7 @@ export const initSocket = (server) => {
 
     socket.on('send_message', async (data) => {
       try {
-        const { participantId, sender, text } = data;
+        const { participantId, sender, text, chatMode = 'ai' } = data;
         let conversation = await Conversation.findOne({ participantId });
         if (!conversation) {
           conversation = await Conversation.create({ participantId });
@@ -106,7 +106,9 @@ export const initSocket = (server) => {
         io.to('admin_room').emit('receive_message', { ...message.toObject(), participantId });
         io.to('admin_room').emit('update_conversation', conversation);
 
-        if (sender === 'User' && adminSockets.size === 0) {
+        // chatMode = 'ai' (default): luôn gọi AI trả lời
+        // chatMode = 'admin': chỉ gửi cho admin, không trigger AI
+        if (sender === 'User' && chatMode !== 'admin') {
           io.to(participantId).emit('ai_typing', true);
 
           try {
@@ -115,11 +117,6 @@ export const initSocket = (server) => {
               .limit(12);
 
             const { text: aiText, products } = await generateAIResponse(toAIMessages(history));
-
-            if (adminSockets.size > 0) {
-              console.log('Admin came online during AI processing, skipping AI reply');
-              return;
-            }
 
             const aiMessage = await Message.create({
               conversationId: conversation._id,

@@ -52,6 +52,9 @@ app.use('/api/flash-sales', flashSaleRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/chat-live', chatLiveRoutes);
 app.use('/api/addresses', addressRoutes);
+app.use('/api/banners', bannerRoutes);
+app.use('/api/shipping', shippingRoutes);
+app.use('/api/games', gameRoutes);
 
 app.get('/api/config/paypal', (req, res) => {
   res.send(process.env.PAYPAL_CLIENT_ID || 'sb');

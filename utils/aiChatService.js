@@ -3,7 +3,14 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import OpenAI from 'openai';
+import dns from 'dns';
 import Product from '../models/Product.js';
+
+try {
+  dns.setDefaultResultOrder('ipv4first');
+} catch (e) {
+  // Ignore if not supported
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -317,8 +324,8 @@ const buildProductContext = (products) => {
         typeof p.stock === 'number' ? (p.stock > 0 ? 'còn hàng' : 'hết hàng') : '';
 
       return `${i + 1}. **${p.name}** — ${p.brand}${volume ? `, ${volume}` : ''} — ${price.toLocaleString('vi-VN')}₫${originalPrice}${stockInfo ? ` — ${stockInfo}` : ''}${p.scentNotes && p.scentNotes.length > 0
-          ? ` — Notes: ${p.scentNotes.slice(0, 4).join(', ')}`
-          : ''
+        ? ` — Notes: ${p.scentNotes.slice(0, 4).join(', ')}`
+        : ''
         }`;
     })
     .join('\n');
@@ -359,27 +366,7 @@ const isRetryableAIError = (error) => {
 };
 
 const resolveAvailableModel = async (client, preferredModel) => {
-  const now = Date.now();
-  if (cachedModel && now - cachedModelAt < MODEL_CACHE_TTL_MS) {
-    return cachedModel;
-  }
-
-  try {
-    const listed = await client.models.list();
-    const available = (listed?.data || []).map((item) => item.id).filter(Boolean);
-
-    if (available.length === 0) {
-      return preferredModel;
-    }
-
-    const resolved = available.includes(preferredModel) ? preferredModel : available[0];
-    cachedModel = resolved;
-    cachedModelAt = now;
-    return resolved;
-  } catch (error) {
-    console.warn('Could not list AI models, using configured model:', error.message);
-    return preferredModel;
-  }
+  return preferredModel || 'deepseek-v3.2';
 };
 
 const callChatCompletionWithRetry = async (client, requestPayload, model, maxRetries = 1) => {
@@ -505,88 +492,143 @@ const buildLocalFallbackResponse = (intent, products, lastUserMessage) => {
 
 // ========== MAIN EXPORT ==========
 
-export const generateAIResponse = async (messages) => {
+const HUMAN_REQUEST_KEYWORDS = [
+  'gặp nhân viên', 'gap nhan vien', 'gặp admin', 'gap admin',
+  'nhân viên tư vấn', 'nhan vien tu van', 'người thật', 'nguoi that',
+  'nói chuyện với người', 'tư vấn viên', 'hỗ trợ trực tiếp',
+  'khiếu nại', 'khieu nai', 'đổi trả', 'doi tra', 'bồi thường',
+  'gặp người', 'gap nguoi', 'chát với nhân viên', 'chat voi nhan vien'
+];
+
+const detectHumanRequest = (text) => {
+  const t = (text || '').toLowerCase();
+  return HUMAN_REQUEST_KEYWORDS.some((kw) => t.includes(kw));
+};
+
+export const generateAIResponse = async (messages, onChunk = null) => {
   const startTime = Date.now();
-  const chatConfig = loadConfig();
-  const systemPrompt = loadSystemPrompt();
-
-  if (!chatConfig?.api_key) {
-    throw new Error('AI chat config or API key not found');
-  }
-
-  const lastUserMessage =
-    [...(messages || [])].reverse().find((m) => m.role === 'user')?.content || '';
-
-  const intent = detectIntent(lastUserMessage);
-
-  if (isCircuitOpen()) {
-    const remainingSec = Math.ceil((circuitOpenUntil - Date.now()) / 1000);
-    console.log(`Circuit breaker active (${remainingSec}s left) — instant fallback, no API call`);
-    const products =
-      intent === 'product' ? await retrieveProducts(lastUserMessage) : [];
-    return buildFallbackResult(intent, products, lastUserMessage, startTime);
-  }
-
+  let intent = 'general';
   let products = [];
-  let productContext = '';
-
-  // Bước 1: CHỈ lấy sản phẩm khi intent = 'product'
-  // general/order → products = [], AI chat tự nhiên không ép bán hàng
-  if (intent === 'product') {
-    products = await retrieveProducts(lastUserMessage);
-  }
-  // intent === 'general' hoặc 'order' → products giữ nguyên []
-  productContext = buildProductContext(products);
-
-  const finalSystemPrompt =
-    systemPrompt +
-    (chatConfig.language ? `\n\nNgôn ngữ trả lời bắt buộc: ${chatConfig.language}` : '') +
-    productContext;
-
-  const trimmedMessages = trimHistory(messages, 12);
-
-  const client = new OpenAI({
-    apiKey: chatConfig.api_key,
-    baseURL: chatConfig.base_url,
-    timeout: chatConfig.ai_timeout_ms || 30000,
-  });
-
-  const requestPayload = {
-    messages: [{ role: 'system', content: finalSystemPrompt }, ...trimmedMessages],
-    max_tokens: 600,
-    temperature: 0.5,
-    top_p: 0.9,
-    presence_penalty: 0.4,
-    frequency_penalty: 0.6,
-  };
+  let lastUserMessage = '';
+  let requestHuman = false;
 
   try {
-    const model = await resolveAvailableModel(client, chatConfig.model);
-    const response = await callChatCompletionWithRetry(
-      client,
-      requestPayload,
-      model,
-      chatConfig.max_retries ?? 0
-    );
+    const chatConfig = loadConfig();
+    const systemPrompt = loadSystemPrompt();
 
-    const text =
-      response.choices?.[0]?.message?.content ||
-      'Xin lỗi anh/chị, mình chưa phản hồi được. Anh/chị thử lại hoặc nhắn fanpage giúp mình nhé.';
+    lastUserMessage =
+      [...(messages || [])].reverse().find((m) => m.role === 'user')?.content || '';
+
+    intent = detectIntent(lastUserMessage);
+    requestHuman = detectHumanRequest(lastUserMessage);
+
+    if (intent === 'product') {
+      try {
+        products = await retrieveProducts(lastUserMessage);
+      } catch (pErr) {
+        console.error('Error retrieving products for AI context:', pErr);
+      }
+    }
+
+    if (!chatConfig?.api_key || isCircuitOpen()) {
+      console.log('AI API Key missing or Circuit breaker active — using local fallback');
+      const fallback = buildLocalFallbackResponse(intent, products, lastUserMessage);
+      return { ...fallback, requestHuman };
+    }
+
+    const productContext = buildProductContext(products);
+    const finalSystemPrompt =
+      systemPrompt +
+      (chatConfig.language ? `\n\nNgôn ngữ trả lời bắt buộc: ${chatConfig.language}` : '') +
+      productContext;
+
+    const trimmedMessages = trimHistory(messages, 12);
+
+    const rawBaseURL = (chatConfig.base_url || 'https://api.yescale.io').replace(/\/+$/, '');
+    const baseURL = rawBaseURL.endsWith('/v1') ? rawBaseURL : `${rawBaseURL}/v1`;
+
+    const client = new OpenAI({
+      apiKey: chatConfig.api_key,
+      baseURL,
+      timeout: chatConfig.ai_timeout_ms || 15000,
+      defaultHeaders: {
+        'X-YEScale-Metadata': JSON.stringify({ feature: 'aventis_cskh_bot' }),
+      },
+    });
+
+    const requestPayload = {
+      messages: [{ role: 'system', content: finalSystemPrompt + '\n\nYêu cầu phản hồi: Trả lời ngắn gọn 2-3 câu ngắn, đi thẳng vào vấn đề.' }, ...trimmedMessages],
+      max_tokens: 512,
+      temperature: 0.5,
+    };
+
+    const model = chatConfig.model || 'deepseek-v3.2';
+
+    const timeoutMs = chatConfig.ai_timeout_ms || 15000;
+
+    const fetchWithTimeout = async () => {
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`AI API timeout (${timeoutMs}ms)`)), timeoutMs)
+      );
+
+      const apiPromise = (async () => {
+        let text = '';
+        try {
+          const stream = await client.chat.completions.create({
+            ...requestPayload,
+            model,
+            stream: true,
+          });
+
+          for await (const chunk of stream) {
+            const delta = chunk.choices[0]?.delta?.content;
+            if (delta) {
+              text += delta;
+              if (typeof onChunk === 'function') {
+                onChunk(delta);
+              }
+            }
+          }
+        } catch (streamErr) {
+          console.warn('Streaming error, retrying without stream:', streamErr.message);
+          const fallbackResponse = await client.chat.completions.create({
+            ...requestPayload,
+            model,
+            stream: false,
+          });
+          text = fallbackResponse.choices?.[0]?.message?.content || '';
+          if (text && typeof onChunk === 'function') {
+            onChunk(text);
+          }
+        }
+        return text;
+      })();
+
+      return Promise.race([apiPromise, timeoutPromise]);
+    };
+
+    const text = await fetchWithTimeout();
+
+    if (!text || !text.trim()) {
+      const fallback = buildLocalFallbackResponse(intent, products, lastUserMessage);
+      return { ...fallback, requestHuman };
+    }
 
     return {
       text,
       products: formatProductsForClient(products),
       intent,
+      requestHuman,
       latency: Date.now() - startTime,
       source: 'ai',
     };
   } catch (error) {
     console.error('AI API failed, using local fallback:', {
-      message: error.message,
+      message: error?.message,
       status: error?.status,
       code: error?.code,
-      type: error?.type,
     });
-    return buildFallbackResult(intent, products, lastUserMessage, startTime);
+    const fallback = buildLocalFallbackResponse(intent, products, lastUserMessage);
+    return { ...fallback, requestHuman };
   }
 };

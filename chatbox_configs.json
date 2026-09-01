@@ -1,7 +1,7 @@
 {
-    "api_key": "sk-NuUh7amC3xSPlTraKv3skXauaCGEqZ0nN0PrYKCukU7o41c6",
-    "base_url": "https://api.yescale.io/v1",
-    "model": "deepseek-v3",
+    "api_key": "",
+    "base_url": "https://api.yescale.io",
+    "model": "deepseek-v3.2",
     "language": "vi-VN",
-    "ai_timeout_ms": 60000
+    "ai_timeout_ms": 15000
 }

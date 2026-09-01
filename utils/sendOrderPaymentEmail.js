@@ -45,26 +45,26 @@ const buildOrderItemsHtml = (orderItems = []) =>
     .join('');
 
 const buildOrderSummaryBlock = (order) => `
-        <div style="background: #faf8f4; border: 1px solid #e8e0d4; border-radius: 8px; padding: 16px; margin: 20px 0;">
-          <p style="margin: 0 0 8px;"><strong>Mã đơn hàng:</strong> #${order._id
+        <div style="background: #e6f7f5; border: 1px solid #b9f1ea; border-radius: 10px; padding: 18px; margin: 20px 0;">
+          <p style="margin: 0 0 8px; color: #111827;"><strong>Mã đơn hàng:</strong> <span style="color: #0d9488; font-weight: 700;">#${order._id
     .toString()
     .slice(-8)
-    .toUpperCase()}</p>
-          <p style="margin: 0 0 8px;"><strong>Phương thức:</strong> ${formatPaymentMethod(
+    .toUpperCase()}</span></p>
+          <p style="margin: 0 0 8px; color: #111827;"><strong>Phương thức:</strong> ${formatPaymentMethod(
       order.paymentMethod
     )}</p>
-          <p style="margin: 0;"><strong>Tổng tiền:</strong> <span style="color: #8b5a2b; font-size: 18px;">${formatCurrency(
+          <p style="margin: 0; color: #111827;"><strong>Tổng tiền:</strong> <span style="color: #0d9488; font-size: 18px; font-weight: bold;">${formatCurrency(
       order.totalPrice
     )}</span></p>
         </div>
 
-        <h3 style="font-size: 16px; margin-bottom: 12px;">Chi tiết sản phẩm</h3>
+        <h3 style="font-size: 16px; margin-bottom: 12px; color: #111827;">Chi tiết sản phẩm</h3>
         <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
           <thead>
-            <tr style="background: #f5f5f5;">
-              <th style="padding: 10px; text-align: left;">Sản phẩm</th>
-              <th style="padding: 10px; text-align: center;">SL</th>
-              <th style="padding: 10px; text-align: right;">Thành tiền</th>
+            <tr style="background: #f0fdfa; border-bottom: 2px solid #5DC8BE;">
+              <th style="padding: 10px; text-align: left; color: #0d9488;">Sản phẩm</th>
+              <th style="padding: 10px; text-align: center; color: #0d9488;">SL</th>
+              <th style="padding: 10px; text-align: right; color: #0d9488;">Thành tiền</th>
             </tr>
           </thead>
           <tbody>
@@ -72,7 +72,7 @@ const buildOrderSummaryBlock = (order) => `
           </tbody>
         </table>
 
-        <div style="margin-top: 16px; font-size: 14px; text-align: right;">
+        <div style="margin-top: 16px; font-size: 14px; text-align: right; color: #374151;">
           <p style="margin: 4px 0;">Tạm tính: ${formatCurrency(order.itemsPrice)}</p>
           <p style="margin: 4px 0;">Phí vận chuyển: ${formatCurrency(order.shippingPrice)}</p>
           ${order.discountPrice > 0
@@ -80,13 +80,13 @@ const buildOrderSummaryBlock = (order) => `
     }: -${formatCurrency(order.discountPrice)}</p>`
     : ''
   }
-          <p style="margin: 8px 0 0; font-weight: bold; font-size: 16px;">Tổng cộng: ${formatCurrency(
+          <p style="margin: 8px 0 0; font-weight: bold; font-size: 16px; color: #0d9488;">Tổng cộng: ${formatCurrency(
     order.totalPrice
   )}</p>
         </div>
 
-        <h3 style="font-size: 16px; margin: 24px 0 8px;">Địa chỉ giao hàng</h3>
-        <p style="margin: 0; font-size: 14px; line-height: 1.6;">
+        <h3 style="font-size: 16px; margin: 24px 0 8px; color: #111827;">Địa chỉ giao hàng</h3>
+        <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #4b5563;">
           ${order.shippingAddress?.address || ''}<br>
           ${order.shippingAddress?.city || ''}, ${order.shippingAddress?.postalCode || ''}<br>
           ${order.shippingAddress?.country || 'Việt Nam'}
@@ -94,15 +94,15 @@ const buildOrderSummaryBlock = (order) => `
 `;
 
 const buildShellHtml = (subtitle, bodyInner) => `
-    <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; color: #333;">
-      <div style="background: linear-gradient(135deg, #1a1a1a 0%, #3d2b1f 100%); padding: 24px; text-align: center; border-radius: 8px 8px 0 0;">
-        <h1 style="color: #d4af37; margin: 0; font-size: 22px; letter-spacing: 2px;">AVENTIS</h1>
-        <p style="color: #f5f0e8; margin: 8px 0 0; font-size: 14px;">${subtitle}</p>
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 640px; margin: 0 auto; color: #333; background-color: #f4f6f8; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #111827 0%, #1f2937 100%); padding: 28px 24px; text-align: center; border-radius: 12px 12px 0 0;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 4px; font-family: Arial, sans-serif;">AVENTIS</h1>
+        <p style="color: #5DC8BE; margin: 6px 0 0; font-size: 12px; letter-spacing: 2px; font-weight: 600; text-transform: uppercase;">PERFUME • ${subtitle}</p>
       </div>
-      <div style="padding: 24px; background: #fff; border: 1px solid #eee; border-top: none;">
+      <div style="padding: 28px; background: #ffffff; border-radius: 0 0 12px 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; border-top: none;">
         ${bodyInner}
-        <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
-        <p style="color: #999; font-size: 12px;">Đây là email tự động từ Aventis. Vui lòng không trả lời email này.</p>
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 28px 0 20px;">
+        <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">Đây là email tự động từ <strong>Aventis Perfume</strong>. Vui lòng không trả lời email này.</p>
       </div>
     </div>
   `;
@@ -122,17 +122,17 @@ const buildOrderPlacedHtml = (order, user) => {
   return buildShellHtml(
     'Xác nhận đơn hàng',
     `
-        <p>Xin chào <strong>${user.name}</strong>,</p>
-        <p>Cảm ơn anh/chị đã đặt hàng tại <strong>Aventis</strong>. Chúng tôi đã <strong>nhận đơn hàng</strong> và đang xử lý.</p>
-        <p style="color: #666; font-size: 14px;">Trạng thái: <strong>${order.status || 'Chờ xử lý'
+        <p style="font-size: 15px; color: #374151; margin-top: 0;">Xin chào <strong>${user.name}</strong>,</p>
+        <p style="font-size: 15px; color: #374151;">Cảm ơn anh/chị đã đặt hàng tại <strong style="color: #0d9488;">Aventis</strong>. Chúng tôi đã <strong>nhận đơn hàng</strong> và đang xử lý.</p>
+        <p style="color: #4b5563; font-size: 14px; background: #f8fafc; padding: 10px 14px; border-radius: 6px; border-left: 4px solid #5DC8BE;">Trạng thái: <strong>${order.status || 'Chờ xử lý'
     }</strong>. ${paymentHint}</p>
         ${buildOrderSummaryBlock(order)}
-        <p style="margin: 24px 0;">
-          <a href="${orderUrl}" style="background-color: #8b5a2b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+        <p style="margin: 28px 0; text-align: center;">
+          <a href="${orderUrl}" style="background-color: #0d9488; background-image: linear-gradient(135deg, #5DC8BE 0%, #0d9488 100%); color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 700; font-size: 14px; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3); text-transform: uppercase;">
             Theo dõi đơn hàng
           </a>
         </p>
-        <p style="color: #666; font-size: 14px;">Anh/chị sẽ nhận thêm email khi thanh toán thành công (nếu thanh toán online).</p>
+        <p style="color: #6b7280; font-size: 13px; text-align: center;">Anh/chị sẽ nhận thêm email khi thanh toán thành công (nếu thanh toán online).</p>
     `
   );
 };
@@ -172,16 +172,16 @@ const buildOrderPaymentHtml = (order, user) => {
   return buildShellHtml(
     'Xác nhận thanh toán đơn hàng',
     `
-        <p>Xin chào <strong>${user.name}</strong>,</p>
-        <p>Cảm ơn anh/chị đã mua sắm tại <strong>Aventis</strong>. Đơn hàng của anh/chị đã được <strong>thanh toán thành công</strong>.</p>
-        <p style="margin: 0 0 8px; font-size: 14px;"><strong>Thời gian thanh toán:</strong> ${paidAt}</p>
+        <p style="font-size: 15px; color: #374151; margin-top: 0;">Xin chào <strong>${user.name}</strong>,</p>
+        <p style="font-size: 15px; color: #374151;">Cảm ơn anh/chị đã mua sắm tại <strong style="color: #0d9488;">Aventis</strong>. Đơn hàng của anh/chị đã được <strong style="color: #16a34a;">thanh toán thành công</strong>.</p>
+        <p style="margin: 0 0 12px; font-size: 14px; color: #4b5563; background: #f0fdf4; padding: 10px 14px; border-radius: 6px; border-left: 4px solid #16a34a;"><strong>Thời gian thanh toán:</strong> ${paidAt}</p>
         ${buildOrderSummaryBlock(order)}
-        <p style="margin: 24px 0;">
-          <a href="${orderUrl}" style="background-color: #8b5a2b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+        <p style="margin: 28px 0; text-align: center;">
+          <a href="${orderUrl}" style="background-color: #0d9488; background-image: linear-gradient(135deg, #5DC8BE 0%, #0d9488 100%); color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 700; font-size: 14px; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3); text-transform: uppercase;">
             Theo dõi đơn hàng
           </a>
         </p>
-        <p style="color: #666; font-size: 14px;">Đơn hàng đang được xử lý. Anh/chị sẽ nhận được thông báo khi đơn hàng được giao.</p>
+        <p style="color: #6b7280; font-size: 13px; text-align: center;">Đơn hàng đang được xử lý. Anh/chị sẽ nhận được thông báo khi đơn hàng được giao.</p>
     `
   );
 };
@@ -212,19 +212,27 @@ Cảm ơn anh/chị đã mua sắm tại Aventis!`;
 };
 
 const resolveOrderWithUser = async (order) => {
-  if (order?.user?.email) {
-    return order;
+  if (!order) return null;
+  let orderDoc = order;
+  if (!order.user?.email && order._id) {
+    const fetched = await Order.findById(order._id).populate('user', 'name email');
+    if (fetched) orderDoc = fetched;
   }
-  if (!order?._id) {
-    return null;
-  }
-  return Order.findById(order._id).populate('user', 'name email');
+  
+  const email = orderDoc?.user?.email || orderDoc?.shippingAddress?.email;
+  const name = orderDoc?.user?.name || orderDoc?.shippingAddress?.fullName || 'Quý khách';
+
+  return {
+    orderDoc,
+    user: { email, name }
+  };
 };
 
 export const notifyOrderPlaced = async (order) => {
   try {
-    const orderDoc = await resolveOrderWithUser(order);
-    const user = orderDoc?.user;
+    const resolved = await resolveOrderWithUser(order);
+    const orderDoc = resolved?.orderDoc || order;
+    const user = resolved?.user;
 
     if (!user?.email) {
       console.warn(`[Order Email] Không có email cho đơn hàng ${orderDoc?._id}`);
@@ -250,8 +258,9 @@ export const notifyOrderPlaced = async (order) => {
 
 export const notifyOrderPaid = async (order) => {
   try {
-    const orderDoc = await resolveOrderWithUser(order);
-    const user = orderDoc?.user;
+    const resolved = await resolveOrderWithUser(order);
+    const orderDoc = resolved?.orderDoc || order;
+    const user = resolved?.user;
 
     if (!user?.email) {
       console.warn(`[Order Email] Không có email cho đơn hàng ${orderDoc?._id}`);

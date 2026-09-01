@@ -325,8 +325,8 @@ const addOrderItems = async (req, res) => {
                 voucherCode,
                 discountPrice,
                 status: 'Chờ xử lý',
-                isPaid: paymentMethod === 'SEPAY' || paymentMethod === 'VNPAY',
-                paidAt: paymentMethod === 'SEPAY' || paymentMethod === 'VNPAY' ? Date.now() : undefined
+                isPaid: paymentMethod === 'SEPAY',
+                paidAt: paymentMethod === 'SEPAY' ? Date.now() : undefined
             });
 
             console.log("2. OBJECT SAU KHI MONGOOSE PARSE THEO SCHEMA:", order.shippingAddress);
